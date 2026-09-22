@@ -1,0 +1,33 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: novel-agent-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-novel_agent}
+      POSTGRES_USER: ${POSTGRES_USER:-novel_agent}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - novel_agent_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-novel_agent} -d ${POSTGRES_DB:-novel_agent}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: novel-agent-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  novel_agent_pgdata:
