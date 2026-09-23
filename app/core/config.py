@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     postgres_db: str = "novel_agent"
     postgres_user: str = "novel_agent"
     postgres_password: str = "change_me"
-    database_url: str | None = None
+    database_url: str | None = DATABASE_URL
 
     redis_url: str = "redis://localhost:6379/0"
 
@@ -43,12 +43,12 @@ class Settings(BaseSettings):
 
     @property
     def sqlalchemy_database_url(self) -> str:
-        if self.database_url:
-            return self.database_url
-        return (
-            f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}"
-            f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
-        )
+        #if self.database_url:
+        return self.database_url
+        # return (
+        #     f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}"
+        #     f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
+        # )
 
 
 settings = Settings()

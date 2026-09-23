@@ -69,6 +69,9 @@ def build_graph():
     graph.add_node("revision", revision_node)
     graph.add_node("commit", commit_node)
 
+
+    
+
     graph.add_edge(START, "orchestrator")
     graph.add_conditional_edges(
         "orchestrator",

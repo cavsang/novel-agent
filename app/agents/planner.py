@@ -1,33 +1,32 @@
 """
-Chapter / Scene Planner — STEP 2 MVP 버전.
+Chapter / Scene Planner — STEP 4 버전.
 
 STEP 0 최종 설계에서는 Story Architect가 장기 플롯을 먼저 설계하고
-Chapter Planner -> Scene Planner 순으로 내려오지만, STEP 2는
-"Planner -> Writer -> Editor -> Revision" 루프 자체를 검증하는 단계이므로
-Architect 없이 사용자가 준 premise로 Scene Contract 하나를 직접 만든다.
+Chapter Planner -> Scene Planner 순으로 내려오지만, Architect는 아직
+없으므로(향후 STEP) 사용자가 준 premise로 Scene Contract 하나를 직접
+만드는 STEP 2 방식을 유지한다.
 
-Story Architect(장기 플롯)와 여러 Scene에 걸친 Chapter 단위 계획은
-STEP 3(Story Memory) 이후, 실제 Novel/Chapter 엔티티가 DB에 생기면
-그 시점에 추가한다.
-
-Tool 권한 원칙(STEP 0 §23): Planner -> Memory/Todo 읽기 / Plan 생성.
-STEP 2에는 아직 Memory/Todo가 없으므로 입력(premise)만으로 생성한다.
+STEP 4에서 추가된 것: Tool 권한 원칙(STEP 0 §23) "Planner -> Memory/Todo
+읽기 / Plan 생성"을 실제로 구현 — get_active_todos()로 아직 처리되지
+않은 Todo를 읽어와 Scene Contract에 "Active_Todos"로 반영한다. 이렇게
+하면 예: 이전 Scene에서 심어둔 Foreshadow Todo가 있을 때 Writer가 그걸
+인지한 채로 다음 Scene을 쓸 수 있다.
 """
 
 from __future__ import annotations
 
 from app.graph.state import NovelState
+from app.memory.repository import get_active_todos
 
 
 def build_scene_contract(state: NovelState) -> dict:
     """
-    NovelState.scratch["premise"]를 바탕으로 Scene Contract(dict)를 만든다.
-    STEP 2에서는 LLM 없이 규칙 기반으로 계약의 뼈대를 채운다 —
-    Scene Contract 자체를 LLM에 맡기는 것은 STEP 3 이후 Story Architect가
-    장기 플롯 맥락을 함께 줄 수 있을 때가 더 적절하다.
+    NovelState.scratch["premise"]와 Story DB의 활성 Todo를 바탕으로
+    Scene Contract(dict)를 만든다.
     """
-    scratch = state.get("scratch", {}) or {}
+    scratch = state.scratch
     premise: str = scratch.get("premise", "(premise 미지정)")
+    active_todos = get_active_todos(state.novel_id)
 
     return {
         "POV": scratch.get("pov", "주인공 1인칭 근접 3인칭"),
@@ -52,4 +51,5 @@ def build_scene_contract(state: NovelState) -> dict:
         "Things_That_Must_NOT_Happen": scratch.get(
             "must_not_happen", ["주인공의 진짜 정체/비밀이 이 장면에서 노출되는 것"]
         ),
+        "Active_Todos": [t["goal"] for t in active_todos] if active_todos else [],
     }
